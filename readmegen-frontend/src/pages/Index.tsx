@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import GenerateInput from "@/components/GenerateInput";
 import MarkdownEditor from "@/components/MarkdownEditor";
 import FeatureCards from "@/components/FeatureCards";
@@ -86,6 +87,20 @@ const Index = () => {
           >
             GitHub ↗
           </a>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/login"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Log in
+            </Link>
+            <Link
+              to="/signup"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-[0_0_10px_hsl(217_91%_60%/0.4)] transition-opacity hover:opacity-90"
+            >
+              Sign up
+            </Link>
+          </div>
         </nav>
 
         <section className="mb-10 flex flex-col items-center text-center sm:mb-14">
