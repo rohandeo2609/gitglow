@@ -23,7 +23,7 @@ const Index = () => {
     setMarkdown("");
 
     try {
-      const response = await fetch("https://gitglow-backend.onrender.com/generate-readme", {
+      const response = await fetch("https://gitglow-backend.onrender.com", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
