@@ -1,5 +1,4 @@
 import os
-import sqlite3
 import traceback
 from typing import List
 from fastapi import FastAPI, HTTPException
@@ -8,6 +7,7 @@ from pydantic import BaseModel
 from github import Github
 from google import genai
 from dotenv import load_dotenv
+from pymongo import MongoClient
 
 load_dotenv()
 
@@ -23,30 +23,12 @@ app.add_middleware(
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-def init_db():
-    conn = sqlite3.connect("history.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            repo_url TEXT NOT NULL,
-            readme_content TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-init_db()
+mongo_client = MongoClient(os.getenv("MONGO_URI"))
+db = mongo_client["gitglow"]
+history_collection = db["history"]
 
 def save_to_history(url: str, content: str):
-    conn = sqlite3.connect("history.db")
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO history (repo_url, readme_content) VALUES (?, ?)",
-        (url, content)
-    )
-    conn.commit()
-    conn.close()
+    history_collection.insert_one({"repo_url": url, "readme_content": content})
 
 class RepoRequest(BaseModel):
     url: str
@@ -145,10 +127,14 @@ async def generate_readme(request: RepoRequest):
 
 @app.get("/history")
 async def get_history():
-    conn = sqlite3.connect("history.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, repo_url, readme_content FROM history ORDER BY id DESC")
-    rows = cursor.fetchall()
-    conn.close()
+    rows = history_collection.find().sort("_id", -1).limit(20)
     
-    return [{"id": row[0], "repo_url": row[1], "readme_content": row[2]} for row in rows]
+    result = []
+    for row in rows:
+        result.append({
+            "id": str(row["_id"]),
+            "repo_url": row["repo_url"],
+            "readme_content": row["readme_content"]
+        })
+    
+    return result
